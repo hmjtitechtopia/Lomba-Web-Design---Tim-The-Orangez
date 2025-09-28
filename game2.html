@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Memory Match 4x4</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #8B4513, #D2B48C);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            min-height: 100vh;
+        }
+
+        .kontainerUtama {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: white
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .formNama {
+            background: rgba(255,255,255,0.9);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .formNama input {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #C87941;
+            border-radius: 5px;
+            margin: 10px;
+            width: 200px;
+        }
+
+        .infoPemain {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .papanPermainan {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        .kartu {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #C87941, #8B4513);
+            border: 3px solid #654321;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.6s;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .kartu:hover {
+            transform: scale(1.05) rotateY(15deg);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .kartu .belakang {
+            color: white;
+            font-size: 24px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .kartu.sedangBalik {
+            transform: rotateY(180deg);
+        }
+
+        .kartu.terbuka {
+            background: white;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            transform: rotateY(180deg);
+        }
+
+        .kartu.terbuka .belakang {
+            display: none;
+        }
+
+        .kartu.cocok {
+            border-color: #228B22;
+            background-color: #90EE90 !important;
+            transform: rotateY(180deg) scale(0.95);
+            animation: kedipCocok 0.5s ease-in-out;
+        }
+
+        @keyframes kedipCocok {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .tombolMulai {
+            background: linear-gradient(135deg, #C87941, #8B4513);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .tombolMulai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .overlayMenang {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .pesanMenang {
+            background: linear-gradient(135deg, #C87941, #D2B48C);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .leaderboard {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .leaderboard h3 {
+            color: #C87941;
+            margin-bottom: 15px;
+        }
+
+        .playerScore {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+
+        .playerScore.currentPlayer {
+            background: #C87941;
+            color: white;
+        }
+
+        .area-game {
+            display: none;
+        }
+
+        .area-game.aktif {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="kontainerUtama">
+        <h1>Memory Match - The orangez</h1>
+        
+        <div id="areaInput" class="formNama">
+            <h2 style="color: #C87941;">Masukkan Nama Anda</h2>
+            <input type="text" id="inputNamaPemain" placeholder="Nama lengkap..." maxlength="15">
+            <br>
+            <button class="tombolMulai" onclick="mulaiGame()">Gas main!</button>
+        </div>
+
+        <div id="areaGame" class="area-game">
+            <div class="infoPemain">
+                <div>Pemain: <span id="namaPemain"></span></div>
+                <div>Langkah: <span id="hitungLangkah">0</span></div>
+                <div>Waktu: <span id="waktuPermainan">00:00</span></div>
+            </div>
+
+            <button class="tombolMulai" onclick="mulaiPermainanBaru()">New game</button>
+
+            <div class="papanPermainan" id="papanPermainan"></div>
+
+            <div class="leaderboard">
+                <h3><i class="fas fa-trophy"></i> Leaderboard</h3>
+                <div id="daftarSkor"></div>
+            </div>
+        </div>
+
+        <div class="overlayMenang" id="overlayMenang">
+            <div class="pesanMenang">
+                <h2><i class="fas fa-star"></i> Hebat Sekali!</h2>
+                <p>Total Langkah: <span id="langkahAkhir"></span></p>
+                <p>Waktu: <span id="waktuAkhir"></span></p>
+                <button class="tombolMulai" onclick="tutupOverlay()">Lanjut</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // data gambar alat musik tradisional
+        let daftarGambar = [
+            'https://aset-wa-nus.vercel.app/gendang_melayu.jpg',
+            'https://aset-wa-nus.vercel.app/angklung.jpg_.webp',
+            'https://aset-wa-nus.vercel.app/Pempek-1.jpg',
+            'https://aset-wa-nus.vercel.app/tifa.jpg',
+            'https://aset-wa-nus.vercel.app/Rebab.jpg',
+            'https://aset-wa-nus.vercel.app/Kolintang.jpg',
+            'https://aset-wa-nus.vercel.app/gendan_betawi.png',
+            'https://aset-wa-nus.vercel.app/serulingsunda.jpg'
+        ];
+
+        let kartuPapan = [];
+        let kartuTerbuka = [];
+        let langkah = 0;
+        let waktuMulai;
+        let intervalWaktu;
+        let permainanSelesai = false;
+        let namaPemainSekarang = '';
+
+        // data leaderboard dummy
+        let skorPemain = [
+            {nama: 'Agus', langkah: 18, waktu: '02:15'},
+            {nama: 'Alif', langkah: 22, waktu: '02:45'},
+            {nama: 'Purwanto', langkah: 16, waktu: '01:58'},
+            {nama: 'Aldi', langkah: 24, waktu: '03:12'}
+        ];
+
+        function mulaiGame() {
+            let inputNama = document.getElementById('inputNamaPemain').value.trim();
+            if (inputNama === '') {
+                alert('Harap masukkan nama terlebih dahulu!');
+                return;
+            }
+            
+            namaPemainSekarang = inputNama;
+            document.getElementById('namaPemain').textContent = namaPemainSekarang;
+            document.getElementById('areaInput').style.display = 'none';
+            document.getElementById('areaGame').classList.add('aktif');
+            
+            tampilkanLeaderboard();
+            mulaiPermainanBaru();
+        }
+
+        function buatDaftarKartu() {
+            let kartuArray = [];
+            let i;
+            for (i = 0; i < daftarGambar.length; i++) {
+                kartuArray.push(daftarGambar[i]);
+                kartuArray.push(daftarGambar[i]);
+            }
+            return acakArray(kartuArray);
+        }
+
+        function acakArray(array) {
+            let hasilAcak = array.slice();
+            let i, j, temp;
+            for (i = hasilAcak.length - 1; i > 0; i--) {
+                j = Math.floor(Math.random() * (i + 1));
+                temp = hasilAcak[i];
+                hasilAcak[i] = hasilAcak[j];
+                hasilAcak[j] = temp;
+            }
+            return hasilAcak;
+        }
+
+        function buatPapanPermainan() {
+            let papan = document.getElementById('papanPermainan');
+            papan.innerHTML = '';
+            kartuPapan = buatDaftarKartu();
+
+            let i;
+            for (i = 0; i < kartuPapan.length; i++) {
+                let kartu = document.createElement('div');
+                kartu.className = 'kartu';
+                kartu.setAttribute('data-indeks', i);
+                kartu.setAttribute('data-gambar', kartuPapan[i]);
+                
+                let iconBelakang = document.createElement('div');
+                iconBelakang.className = 'belakang';
+                iconBelakang.innerHTML = '<i class="fas fa-question"></i>';
+                kartu.appendChild(iconBelakang);
+                
+                kartu.addEventListener('click', klikKartu);
+                papan.appendChild(kartu);
+            }
+        }
+
+        function klikKartu() {
+            if (permainanSelesai) return;
+            if (this.classList.contains('terbuka') || this.classList.contains('cocok')) return;
+            if (kartuTerbuka.length >= 2) return;
+
+            this.classList.add('sedangBalik');
+            
+            let self = this;
+            setTimeout(function() {
+                self.classList.remove('sedangBalik');
+                self.classList.add('terbuka');
+                self.style.backgroundImage = 'url(' + self.getAttribute('data-gambar') + ')';
+            }, 300);
+
+            kartuTerbuka.push(this);
+
+            if (kartuTerbuka.length === 2) {
+                langkah++;
+                document.getElementById('hitungLangkah').textContent = langkah;
+                setTimeout(cekPasangan, 1000);
+            }
+        }
+
+        function cekPasangan() {
+            let kartu1 = kartuTerbuka[0];
+            let kartu2 = kartuTerbuka[1];
+
+            if (kartu1.getAttribute('data-gambar') === kartu2.getAttribute('data-gambar')) {
+                kartu1.classList.add('cocok');
+                kartu2.classList.add('cocok');
+                
+                let audioBenar = document.getElementById('suaraBenar');
+                audioBenar.currentTime = 0;
+                audioBenar.play();
+                
+                cekKemenangan();
+            } else {
+                // animasi balik kembali
+                let audioSalah = document.getElementById('suaraSalah');
+                audioSalah.currentTime = 0;
+                audioSalah.play();
+                
+                kartu1.classList.add('sedangBalik');
+                kartu2.classList.add('sedangBalik');
+                
+                setTimeout(function() {
+                    kartu1.classList.remove('terbuka', 'sedangBalik');
+                    kartu2.classList.remove('terbuka', 'sedangBalik');
+                    kartu1.style.backgroundImage = '';
+                    kartu2.style.backgroundImage = '';
+                }, 300);
+            }
+
+            kartuTerbuka = [];
+        }
+
+        function cekKemenangan() {
+            let kartuCocok = document.querySelectorAll('.kartu.cocok');
+            if (kartuCocok.length === 16) {
+                permainanSelesai = true;
+                clearInterval(intervalWaktu);
+                
+                // update leaderboard
+                let waktuSelesai = document.getElementById('waktuPermainan').textContent;
+                skorPemain.push({
+                    nama: namaPemainSekarang,
+                    langkah: langkah,
+                    waktu: waktuSelesai
+                });
+                
+                skorPemain.sort(function(a, b) {
+                    if (a.langkah !== b.langkah) {
+                        return a.langkah - b.langkah;
+                    }
+                    return a.waktu.localeCompare(b.waktu);
+                });
+                
+                if (skorPemain.length > 5) {
+                    skorPemain = skorPemain.slice(0, 5);
+                }
+                
+                setTimeout(tampilkanKemenangan, 800);
+            }
+        }
+
+        function tampilkanKemenangan() {
+            document.getElementById('langkahAkhir').textContent = langkah;
+            document.getElementById('waktuAkhir').textContent = document.getElementById('waktuPermainan').textContent;
+            document.getElementById('overlayMenang').style.display = 'flex';
+            tampilkanLeaderboard();
+        }
+
+        function tutupOverlay() {
+            document.getElementById('overlayMenang').style.display = 'none';
+        }
+
+        function mulaiPermainanBaru() {
+            langkah = 0;
+            kartuTerbuka = [];
+            permainanSelesai = false;
+            document.getElementById('hitungLangkah').textContent = '0';
+            
+            clearInterval(intervalWaktu);
+            waktuMulai = new Date().getTime();
+            intervalWaktu = setInterval(updateWaktu, 1000);
+            
+            buatPapanPermainan();
+            tutupOverlay();
+        }
+
+        function updateWaktu() {
+            let waktuSekarang = new Date().getTime();
+            let selisih = Math.floor((waktuSekarang - waktuMulai) / 1000);
+            let menit = Math.floor(selisih / 60);
+            let detik = selisih % 60;
+            
+            let formatMenit = menit < 10 ? '0' + menit : menit;
+            let formatDetik = detik < 10 ? '0' + detik : detik;
+            
+            document.getElementById('waktuPermainan').textContent = formatMenit + ':' + formatDetik;
+        }
+        function mainkanMusik() {
+          let musik = document.getElementById("musikLatar");
+          musik.play();
+        }
+        function hentikanMusik() {
+          let musik = document.getElementById("musikLatar");
+          musik.pause();
+        }
+        function tampilkanLeaderboard() {
+            let container = document.getElementById('daftarSkor');
+            container.innerHTML = '';
+            
+            let i;
+            for (i = 0; i < Math.min(skorPemain.length, 5); i++) {
+                let playerDiv = document.createElement('div');
+                playerDiv.className = 'playerScore';
+                
+                if (skorPemain[i].nama === namaPemainSekarang) {
+                    playerDiv.classList.add('currentPlayer');
+                }
+                
+                playerDiv.innerHTML = 
+                    '<span>' + (i + 1) + '. ' + skorPemain[i].nama + '</span>' +
+                    '<span>' + skorPemain[i].langkah + ' (' + skorPemain[i].waktu + ')</span>';
+                
+                container.appendChild(playerDiv);
+            }
+        }
+    </script>
+    <audio src="benar.mp3" id="suaraBenar"></audio>
+    <audio src="salah.mp3" id="suaraSalah"></audio>
+    <audio src="sound.mp3" id="sound" loop></audio>
+</body>
+</html>
